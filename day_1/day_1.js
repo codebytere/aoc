@@ -1,7 +1,9 @@
 const fs = require('node:fs');
+const path = require('node:path');
 
 function parseInput() {
-  const input = fs.readFileSync('./input/day_1.txt', 'utf8');
+  const inputPath = path.join(__dirname, 'input.txt');
+  const input = fs.readFileSync(inputPath, 'utf8');
 
   const one = [];
   const two = [];
