@@ -18,6 +18,14 @@ function parseInput() {
 const { one, two } = parseInput();
 
 // Part 1
+/* Sample Input
+  3   4
+  4   3
+  2   5
+  1   3
+  3   9
+  3   3
+*/
 function getDistance(a, b) {
   const sortedLeft = a.sort((a, b) => a - b);
   const sortedRight = b.sort((a, b) => a - b);
@@ -31,6 +39,14 @@ function getDistance(a, b) {
 console.log(`Part 1 Answer: ${getDistance(one, two)}`);
 
 // Part 2
+/* Sample Input
+  3   4
+  4   3
+  2   5
+  1   3
+  3   9
+  3   3
+*/
 function getSimilarityScore(one, two) {
   const map = new Map();
   two.map((value) => map.set(value, map.has(value) ? map.get(value) + 1 : 1));
