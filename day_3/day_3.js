@@ -9,7 +9,6 @@ function parseInput() {
 const instructions = parseInput();
 
 // Part 1
-// Sample Input: xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
 function totalValidMuls(instructions) {
   const mulPattern = /mul\((\d+,\d+)\)/g;
   const muls = instructions.matchAll(mulPattern);
@@ -26,7 +25,6 @@ const total = totalValidMuls(instructions);
 console.log(`Part 1 Answer: ${total}`);
 
 // Part 2
-// Sample Input: xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
 function totalEnabledMuls(instructions) {
   let total = 0;
   let type = 'do';

@@ -10,19 +10,6 @@ function parseInput() {
 const grid = parseInput();
 
 // Part 1
-/* Sample Input (18)
-  MMMSXXMASM
-  MSAMXMSMSA
-  AMXSXMAAMM
-  MSAMASMSMX
-  XMASAMXAMM
-  XXAMMXXAMA
-  SMSMSASXSS
-  SAXAMASAAA
-  MAMMMXMMMM
-  MXMXAXMASX
-*/
-
 const DIR_TO_COORD = {
   N: [-1, 0],
   E: [0, 1],
@@ -72,19 +59,6 @@ const xmasCount = tallyXMAS(grid);
 console.log(`Part 1 Answer: ${xmasCount}`);
 
 // Part 2
-/* Sample Input (9)
-  MMMSXXMASM
-  MSAMXMSMSA
-  AMXSXMAAMM
-  MSAMASMSMX
-  XMASAMXAMM
-  XXAMMXXAMA
-  SMSMSASXSS
-  SAXAMASAAA
-  MAMMMXMMMM
-  MXMXAXMASX
-*/
-
 function checkAround(pos, grid) {
   const [x, y] = pos;
 

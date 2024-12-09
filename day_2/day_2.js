@@ -14,14 +14,6 @@ function parseInput() {
 const reports = parseInput();
 
 // Part 1
-/* Sample Input
-  7 6 4 2 1
-  1 2 7 8 9
-  9 7 6 2 1
-  1 3 2 4 5
-  8 6 4 4 1
-  1 3 6 7 9
-*/
 function checkIsSafe(report) {
   let direction = null;
   for (let i = 0; i < report.length - 1; i++) {
@@ -39,14 +31,6 @@ const safeReports = reports.filter(checkIsSafe);
 console.log(`Part 1 Answer: ${safeReports.length}`);
 
 // Part 2
-/* Sample Input
-  7 6 4 2 1
-  1 2 7 8 9
-  9 7 6 2 1
-  1 3 2 4 5
-  8 6 4 4 1
-  1 3 6 7 9
-*/
 function tryMakeSafe(report) {
   for (let i = 0; i < report.length; i++) {
     const newReport = [...report];
