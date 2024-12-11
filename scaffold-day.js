@@ -11,7 +11,7 @@ const fail = red(bright('✗'));
 const info = blue(bright('ℹ'));
 
 const date = new Date();
-const day = date.getDay();
+const day = date.getDate();
 const year = date.getFullYear().toString();
 
 function createScaffolding() {
@@ -51,6 +51,5 @@ function createScaffolding() {
 try {
   createScaffolding();
 } catch (e) {
-  console.error(`${fail} Failed to create scaffold for day ${day} in ${year}`);
-  console.error(e);
+  console.error(`${fail} Failed to create scaffold for day ${day} in ${year}`, e);
 }
