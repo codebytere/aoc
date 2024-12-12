@@ -7,8 +7,6 @@ function parseInput() {
   return txt.split('\n').map((line) => line.split(''));
 }
 
-const input = parseInput();
-
 const DIR_TO_COORD = {
   'N': [0, -1],
   'E': [1, 0],
@@ -40,7 +38,37 @@ function calculatePerimeter(points) {
   return perimeter;
 }
 
-function explore(letter, pos, grid) {
+function calculateNumSides(points) {
+  const grp = new Set(points);
+  let seen = new Set();
+  let corners = 0;
+
+  for (const point of grp) {
+    const [y, x] = point.split(',').map(Number);
+
+    for (const [dy, dx] of Object.values(DIR_TO_COORD)) {
+      const neighborKey = `${y + dy},${x + dx}`;
+      if (grp.has(neighborKey)) continue;
+
+      let cy = y;
+      let cx = x;
+      while (grp.has(`${cy + dx},${cx + dy}`) && !grp.has(`${cy + dy},${cx + dx}`)) {
+        cy += dx;
+        cx += dy;
+      }
+
+      const key = `${cy},${cx},${dy},${dx}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        corners += 1;
+      }
+    }
+  }
+
+  return corners;
+}
+
+function explore(letter, pos, grid, calcFn) {
   let [x, y] = pos;
   const queue = [{ x, y }];
   const seen = new Set();
@@ -65,19 +93,18 @@ function explore(letter, pos, grid) {
     }
   }
 
-  const perimeter = calculatePerimeter([...seen]);
-  return { grid, price: perimeter * seen.size };
+  const val = calcFn(seen);
+  return { grid, price: val * seen.size };
 }
 
-// Part 1
-function calculatePlantPrices(gridData) {
-  let grid = gridData;
+function calculatePlantPrices(calcFn) {
+  let grid = parseInput();
   let price = 0;
   for (let x = 0; x < grid.length; x++) {
     for (let y = 0; y < grid[x].length; y++) {
-      const letter = input[x][y];
+      const letter = grid[x][y];
       if (letter !== '.') {
-        const result = explore(letter, [x, y], grid);
+        const result = explore(letter, [x, y], grid, calcFn);
         grid = result.grid;
         price += result.price;
       }
@@ -86,5 +113,10 @@ function calculatePlantPrices(gridData) {
   return price;
 }
 
-const totalPlantPrice = calculatePlantPrices(input);
-console.log(`Part 1 Answer: ${totalPlantPrice}`);
+// Part 1
+const perimeterPlantPrice = calculatePlantPrices(calculatePerimeter);
+console.log(`Part 1 Answer: ${perimeterPlantPrice}`);
+
+// Part 2
+const sidesPlantPrice = calculatePlantPrices(calculateNumSides);
+console.log(`Part 2 Answer: ${sidesPlantPrice}`);
