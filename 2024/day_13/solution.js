@@ -22,10 +22,10 @@ function parseInput() {
 
 const input = parseInput();
 
-// Part 1
-function solveCheapestClawCombo(data) {
+function solveCheapestClawCombo(data, prizeAddition = 0) {
   const cheapest = [];
-  for (const [[ax, ay], [bx, by], [px, py]] of data) {
+  for (const [[ax, ay], [bx, by], prize] of data) {
+    const [px, py] = prize.map(p => p + prizeAddition);
     if ([ax, ay, bx, by].some((v) => v === 0)) {
       continue;
     }
@@ -43,6 +43,11 @@ function solveCheapestClawCombo(data) {
   }, 0);
 }
 
-const cheapestCombo = solveCheapestClawCombo(input);
-console.log(`Part 1 Answer: ${cheapestCombo}`);
+// Part 1
+const cheapestCombo1 = solveCheapestClawCombo(input);
+console.log(`Part 1 Answer: ${cheapestCombo1}`);
+
+// Part 2
+const cheapestCombo2 = solveCheapestClawCombo(input, 10000000000000);
+console.log(`Part 2 Answer: ${cheapestCombo2}`);
 
