@@ -34,7 +34,18 @@ function createScaffolding() {
     const sampleInputPath = path.join(dayDir, 'sample-input.txt');
 
     console.log(`${info} Creating solution file: ${blue(dayPath)}`);
-    fs.writeFileSync(dayPath, '');
+    fs.writeFileSync(dayPath, 
+`const fs = require('node:fs');
+const path = require('node:path');
+
+function parseInput() {
+  const inputPath = path.join(__dirname, 'input.txt');
+  const txt = fs.readFileSync(inputPath, 'utf8').trim();
+  // Todo: Implement remaining parsing logic
+}
+
+const input = parseInput();
+`);
 
     console.log(`${info} Creating input file: ${blue(inputPath)}`);
     fs.writeFileSync(inputPath, '');
