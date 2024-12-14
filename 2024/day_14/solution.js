@@ -18,6 +18,9 @@ function parseInput() {
 
 const input = parseInput();
 
+const BOARD_SIZE = { width: 101, height: 103 };
+const mod = (a, b) => ((a % b) + b) % b;
+
 const getQuadrant = ([x, y], { width, height }) => {
   const xMid = width / 2;
   const yMid = height / 2;
@@ -32,11 +35,10 @@ const getQuadrant = ([x, y], { width, height }) => {
   return vert + horiz;
 }
 
-function getRobotSafetyFactor(data, boardSize, seconds = 0) {
-  const { width, height } = boardSize;
+function getRobotSafetyFactor(data, seconds = 0) {
+  const { width, height } = BOARD_SIZE;
 
   const quadrants = { NW: 0, NE: 0, SW: 0, SE: 0 };
-  const mod = (a, b) => ((a % b) + b) % b;
 
   data.map(({ position, velocity }) => {
     const [px, py] = position;
@@ -47,7 +49,7 @@ function getRobotSafetyFactor(data, boardSize, seconds = 0) {
       mod((py + (vy * seconds)), height),
     ];
 
-    const quadrant = getQuadrant(endPosition, boardSize);
+    const quadrant = getQuadrant(endPosition, BOARD_SIZE);
     if (quadrant) quadrants[quadrant]++;
   });
 
@@ -57,11 +59,37 @@ function getRobotSafetyFactor(data, boardSize, seconds = 0) {
   }, 1);
 }
 
+function getChristmasTreePosition(data) {
+  const { width, height } = BOARD_SIZE;
+
+  for (let second = 1; second < 10000000; second++) {
+    data = data.map(({ position, velocity }) => {
+      const [px, py] = position;
+      const [vx, vy] = velocity;
+
+      return {
+        position: [
+          mod(px + vx, width),
+          mod(py + vy, height),
+        ],
+        velocity,
+      }
+    });
+
+    const positions = new Set(data.map(({ position }) => {
+      return `${position[0]},${position[1]}`;
+    }));
+
+    if (positions.size === data.length) {
+      return second;
+    }
+  }
+}
+
 // Part 1
-const BOARD_SIZE = { width: 101, height: 103 };
-const SECONDS = 100;
-const safetyFactor = getRobotSafetyFactor(input, BOARD_SIZE, SECONDS);
+const safetyFactor = getRobotSafetyFactor(input, 100);
 console.log(`Part 1 Answer: ${safetyFactor}`);
 
 // Part 2
-
+const secondsToChristmas = getChristmasTreePosition(input);
+console.log(`Part 2 Answer: ${secondsToChristmas}`);
