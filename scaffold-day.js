@@ -10,32 +10,47 @@ const success = green(bright('✓'));
 const fail = red(bright('✗'));
 const info = blue(bright('ℹ'));
 
-const date = new Date();
-const day = date.getDate();
-const year = date.getFullYear().toString();
-
-function createScaffolding() {
-  // Create the directory if it doesn't exist.
-  const yearPath = path.join(__dirname, year);
-  if (!fs.existsSync(yearPath)) {
-    console.log(`${info} Creating directory: ${blue(yearPath)}`);
-    fs.mkdirSync(yearPath);
+function getDay(argv) {
+  if (argv.length === 0) {
+    const date = new Date();
+    return {
+      day: date.getDate(),
+      year: date.getFullYear().toString()
+    };
   }
 
-  // Create a directory for the day if it doesn't exist.
-  const dayDir = path.join(yearPath, `day_${day}`);
-  if (!fs.existsSync(dayDir)) {
-    console.log(`${info} Creating directory: ${blue(dayDir)}`);
-    fs.mkdirSync(dayDir);
+  const [ day, year ] = argv;
+  if (isNaN(Number(day)) || isNaN(Number(year))) {
+    console.error(`${fail} Invalid day or year provided: ${argv}`);
+    process.exit(1);
+  }
 
-    // Create files for each component of the solution.
-    const dayPath = path.join(dayDir, 'solution.js');
-    const inputPath = path.join(dayDir, 'input.txt');
-    const sampleInputPath = path.join(dayDir, 'sample-input.txt');
+  return { day, year };
+}
 
-    console.log(`${info} Creating solution file: ${blue(dayPath)}`);
-    fs.writeFileSync(dayPath, 
-`const fs = require('node:fs');
+function createScaffolding({ day, year }) {
+  try {
+    // Create the directory if it doesn't exist.
+    const yearPath = path.join(__dirname, year);
+    if (!fs.existsSync(yearPath)) {
+      console.log(`${info} Creating directory: ${blue(yearPath)}`);
+      fs.mkdirSync(yearPath);
+    }
+
+    // Create a directory for the day if it doesn't exist.
+    const dayDir = path.join(yearPath, `day_${day}`);
+    if (!fs.existsSync(dayDir)) {
+      console.log(`${info} Creating directory: ${blue(dayDir)}`);
+      fs.mkdirSync(dayDir);
+
+      // Create files for each component of the solution.
+      const dayPath = path.join(dayDir, 'solution.js');
+      const inputPath = path.join(dayDir, 'input.txt');
+      const sampleInputPath = path.join(dayDir, 'sample-input.txt');
+
+      console.log(`${info} Creating solution file: ${blue(dayPath)}`);
+      fs.writeFileSync(dayPath,
+        `const fs = require('node:fs');
 const path = require('node:path');
 
 function parseInput() {
@@ -47,20 +62,25 @@ function parseInput() {
 const input = parseInput();
 `);
 
-    console.log(`${info} Creating input file: ${blue(inputPath)}`);
-    fs.writeFileSync(inputPath, '');
+      console.log(`${info} Creating input file: ${blue(inputPath)}`);
+      fs.writeFileSync(inputPath, '');
 
-    console.log(`${info} Creating sample input file: ${blue(sampleInputPath)}`);
-    fs.writeFileSync(sampleInputPath, '');
+      console.log(`${info} Creating sample input file: ${blue(sampleInputPath)}`);
+      fs.writeFileSync(sampleInputPath, '');
 
-    console.log(`${success} Created scaffold for day ${day} of ${year}`);
-  } else {
-    console.log(`${fail} Scaffold for day ${day} in ${year} already exists`);
+      console.log(`${success} Created scaffold for day ${day} of ${year}`);
+    } else {
+      console.log(`${fail} Scaffold for day ${day} in ${year} already exists`);
+    }
+  } catch (e) {
+    console.error(`${fail} Failed to create scaffold for day ${day} in ${year}`, e);
   }
 }
 
-try {
-  createScaffolding();
-} catch (e) {
-  console.error(`${fail} Failed to create scaffold for day ${day} in ${year}`, e);
+if (process.argv?.[2] === '--help') {
+  console.log(`Usage: scaffold-day [day] [year]`);
+  process.exit(0);
 }
+
+const dayInfo = getDay(process.argv.slice(2));
+createScaffolding(dayInfo);
