@@ -56,16 +56,6 @@ class GridPoint {
   }
 }
 
-function printGrid(grid) {
-  for (let i = 0; i < grid.length; i++) {
-    let row = '';
-    for (let j = 0; j < grid[i].length; j++) {
-      row += grid[i][j].value;
-    }
-    console.log(row);
-  }
-}
-
 function findBestPath(grid) {
   let bestPath = [];
   let openSet = [];
@@ -119,7 +109,7 @@ function findBestPath(grid) {
     }
   }
 
-  return { path: [], grid };
+  return { bestPath: [], grid };
 }
 
 function simulateFallingBytes(input, threshold = Number.MAX_SAFE_INTEGER) {
@@ -129,7 +119,7 @@ function simulateFallingBytes(input, threshold = Number.MAX_SAFE_INTEGER) {
 
   input.forEach(({ x, y }, index) => {
     if (index < threshold) {
-      grid[x][y] = '#';
+      grid[y][x] = '#';
     }
   });
 
@@ -151,11 +141,28 @@ function simulateFallingBytes(input, threshold = Number.MAX_SAFE_INTEGER) {
 
 function getMinimumStepsToExit() {
   const input = parseInput();
+  
   const corruptedGrid = simulateFallingBytes(input, 1024);
-
   const { bestPath } = findBestPath(corruptedGrid);
   return bestPath.length - 1;
 }
 
+function getFirstBlockingByte() {
+  const input = parseInput();
+
+  for (let i = 0; i < input.length; i++) {
+    const corruptedGrid = simulateFallingBytes(input, i);
+    const { bestPath } = findBestPath(corruptedGrid);
+    if (bestPath.length === 0) {
+      return input[i - 1];
+    }
+  }
+
+  return { x: -1, y: -1 };
+}
+
 const minStepsToExit = getMinimumStepsToExit();
 console.log(`Part 1 Answer: ${minStepsToExit}`);
+
+const { x, y } = getFirstBlockingByte();
+console.log(`Part 2 Answer: (${x},${y})`);
