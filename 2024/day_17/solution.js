@@ -9,11 +9,11 @@ function parseInput() {
   const registers = {};
   registerData.split('\n').map(line => {
      const rMatch = /Register (\w): (\d+)/g.exec(line);
-    if (rMatch) registers[rMatch[1]] = parseInt(rMatch[2], 10);
+    if (rMatch) registers[rMatch[1]] = BigInt(rMatch[2]);
   });
 
   const pMatch = /Program: ((?:\d+,?)+)/.exec(programData);
-  const program = pMatch ? pMatch[1].split(',').map(Number) : [];
+  const program = pMatch ? pMatch[1].split(',').map(BigInt) : [];
 
   return { registers, program };
 }
@@ -21,108 +21,83 @@ function parseInput() {
 let ip = 0;
 let output = [];
 let registers = {};
+let program = [];
 
-function getComboOperand(operand) {
-  if ([0, 1, 2, 3].includes(operand)) {
-    return operand;
-  }
+const getComboOperand = (operand) => {
+  if (operand < 4n) return operand;
+  if (operand === 4n) return registers.A;
+  if (operand === 5n) return registers.B;
+  if (operand === 6n) return registers.C;
 
-  if (operand === 4) return registers.A;
-  if (operand === 5) return registers.B;
-  if (operand === 6) return registers.C;
-
-  throw new Error(`Invalid combo operand: ${operand}`);
-}
-
-const INSTRUCTIONS = {
-  // Performs division. The numerator is the value in the
-  // A register. The denominator is found by raising 2 to
-  // the power of the instruction's combo operand. (So, an
-  // operand of 2 would divide A by 4 (2^2); an operand of
-  // 5 would divide A by 2^B.) The result of the division
-  // operation is truncated to an integer and then written
-  // to the A register.
-  0: function adv(op) {
-    const operand = getComboOperand(op);
-    const [numerator, denominator] = [ registers.A, Math.pow(2, operand) ];
-    const result = Math.floor(numerator / denominator);
-    registers.A = result;
-    return false;
-  },
-  // Calculates the bitwise XOR of register B and the instruction's
-  // literal operand, then stores the result in register B.
-  1: function bxl(operand) {
-    registers.B = registers.B ^ operand;
-    return false;
-  },
-  // Calculates the value of its combo operand modulo 8
-  // (thereby keeping only its lowest 3 bits), then writes
-  // that value to the B register.
-  2: function bst(op) {
-    const operand = getComboOperand(op);
-    registers.B = operand % 8;
-    return false;
-  },
-  // Does nothing if the A register is 0. However, if the
-  // A register is not zero, it jumps by setting the instruction
-  // pointer to the value of its literal operand; if this
-  // instruction jumps, the instruction pointer is not increased
-  // by 2 after this instruction.
-  3: function jnz(operand) {
-    if (registers.A === 0) return false;
-    ip = operand;
-    return true;
-  },
-  // Calculates the bitwise XOR of register B and register C,
-  // then stores the result in register B. (For legacy reasons,
-  // this instruction reads an operand but ignores it.)
-  4: function bxc(_) {
-    registers.B = registers.B ^ registers.C;
-    return false;
-  },
-  // Calculates the value of its combo operand modulo 8, then
-  // outputs that value. (If a program outputs multiple values,
-  // they are separated by commas.)
-  5: function out(op) {
-    const operand = getComboOperand(op);
-    output.push(operand % 8);
-    return false;
-  },
-  // Works exactly like the adv instruction except that the
-  // result is stored in the B register. (The numerator is
-  // still read from the A register.)
-  6: function bdv( op) {
-    const operand = getComboOperand(op);
-    const [numerator, denominator] = [ registers.A, Math.pow(2, operand) ];
-    const result = Math.floor(numerator / denominator);
-    registers.B = result;
-    return false;
-  },
-  // Works exactly like the adv instruction except that the
-  // result is stored in the C register. (The numerator is
-  // still read from the A register.)
-  7: function cdv(op) {
-    const operand = getComboOperand(op);
-    const [numerator, denominator] = [ registers.A, Math.pow(2, operand) ];
-    const result = Math.floor(numerator / denominator);
-    registers.C = result;
-    return false;
-  }
+  throw new Error('Invalid operand');
 };
 
-function runProgram() {
-  const input = parseInput();
-  registers = input.registers;
-  ip = 0;
+function runProgram(outIndex = 0n, check = false) {
+  ip = 0n;
+  output = [];
+  registers.B = 0n;
+  registers.C = 0n;
+  const end = BigInt(program.length);
 
-  while (ip < input.program.length) {
-    const [opcode, operand] = [input.program[ip], input.program[ip + 1]];
-    const jump = INSTRUCTIONS[opcode](operand);
-    if (!jump) ip += 2;
+  while (ip < end) {
+    const instruction = program[Number(ip)];
+    const opcode = program[Number(ip) + 1];
+
+    if (instruction === 0n) {
+      registers.A = registers.A >> getComboOperand(opcode);
+    } else if (instruction === 1n) {
+      registers.B ^= opcode;
+    } else if (instruction === 2n) {
+      registers.B = getComboOperand(opcode) % 8n;
+    } else if (instruction === 3n) {
+      if (registers.A !== 0n) {
+        ip = opcode;
+        continue;
+      }
+    } else if (instruction === 4n) {
+      registers.B ^= registers.C;
+    } else if (instruction === 5n) {
+      const result = getComboOperand(opcode) % 8n;
+      output.push(result);
+      if (check && result !== program[Number(outIndex)]) {
+        return false;
+      }
+      outIndex += 1n;
+    } else if (instruction === 6n) {
+      registers.B = registers.A >> getComboOperand(opcode);
+    } else {
+      registers.C = registers.A >> getComboOperand(opcode);
+    }
+    ip += 2n;
   }
 
-  return output;
+  return outIndex === end;
 }
 
-const result = runProgram();
-console.log(`Part 1 Answer: ${result.join(',')}`);
+const findInitialA = () => {
+  const inProgress = [[0n, BigInt(program.length) - 1n]];
+  while (inProgress.length > 0) {
+    const [a, distance] = inProgress.shift();
+    for (let chunk = 0n; chunk < 8n; chunk++) {
+      const nextA = (a << 3n) + chunk;
+      registers.A = nextA;
+      if (!runProgram(distance, true)) continue;
+      if (distance === 0n) return nextA;
+      inProgress.push([nextA, distance - 1n]);
+    }
+  }
+
+  return null;
+};
+
+const input = parseInput();
+program = input.program;
+registers = input.registers;
+
+// Part 1
+runProgram();
+console.log(`Part 1 Answer: ${output.join(',')}`);
+
+// Part 2
+const selfModifyingProgram = findInitialA();
+console.log(`Part 2 Answer: ${selfModifyingProgram}`);
