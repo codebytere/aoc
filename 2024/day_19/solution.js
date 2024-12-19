@@ -32,28 +32,23 @@ function countWaysToBuildTarget(target, components, index = 0, memo = {}) {
   return count;
 }
 
-function findPossibleDesigns() {
-  let numPossibleDesigns = 0;
+function findPossibleDesigns(countAllDesigns) {
+  let total = 0;
   for (const design of input.designs) {
     const ways = countWaysToBuildTarget(design, input.patterns);
-    if (ways > 0) numPossibleDesigns++;
+    if (countAllDesigns) {
+      total += ways;
+    } else if (ways > 0) {
+      total += 1;
+    }
   }
-  return numPossibleDesigns;
-}
-
-function findTotalPossibleDesignArrangements() {
-  let totalArrangements = 0;
-  for (const design of input.designs) {
-    const ways = countWaysToBuildTarget(design, input.patterns);
-    totalArrangements += ways;
-  }
-  return totalArrangements;
+  return total;
 }
 
 // Part 1
-const numPossibleDesigns = findPossibleDesigns();
-console.log(`Part 1 Answer: ${numPossibleDesigns}`);
+const possibleDesigns = findPossibleDesigns(false);
+console.log(`Part 1 Answer: ${possibleDesigns}`);
 
 // Part 2
-const arrangements = findTotalPossibleDesignArrangements();
-console.log(`Part 2 Answer: ${arrangements}`);
+const possibleArrangements = findPossibleDesigns(true);
+console.log(`Part 2 Answer: ${possibleArrangements}`);
