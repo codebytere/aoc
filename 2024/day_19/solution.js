@@ -14,30 +14,46 @@ function parseInput() {
 
 const input = parseInput();
 
-function canBuildTarget(target, components, index = 0) {
-  if (index === target.length) return true;
+function countWaysToBuildTarget(target, components, index = 0, memo = {}) {
+  if (index === target.length) return 1;
 
+  if (index in memo) {
+    return memo[index];
+  }
+
+  let count = 0;
   for (const component of components) {
     if (target.substring(index, index + component.length) === component) {
-      if (canBuildTarget(target, components, index + component.length)) {
-        return true;
-      }
+      count += countWaysToBuildTarget(target, components, index + component.length, memo);
     }
   }
 
-  return false;
+  memo[index] = count;
+  return count;
 }
 
 function findPossibleDesigns() {
   let numPossibleDesigns = 0;
   for (const design of input.designs) {
-    if (canBuildTarget(design, input.patterns)) {
-      numPossibleDesigns++;
-    }
+    const ways = countWaysToBuildTarget(design, input.patterns);
+    if (ways > 0) numPossibleDesigns++;
   }
   return numPossibleDesigns;
+}
+
+function findTotalPossibleDesignArrangements() {
+  let totalArrangements = 0;
+  for (const design of input.designs) {
+    const ways = countWaysToBuildTarget(design, input.patterns);
+    totalArrangements += ways;
+  }
+  return totalArrangements;
 }
 
 // Part 1
 const numPossibleDesigns = findPossibleDesigns();
 console.log(`Part 1 Answer: ${numPossibleDesigns}`);
+
+// Part 2
+const arrangements = findTotalPossibleDesignArrangements();
+console.log(`Part 2 Answer: ${arrangements}`);
