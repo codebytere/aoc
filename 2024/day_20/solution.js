@@ -7,152 +7,97 @@ function parseInput() {
   return txt.split('\n').map(line => line.trim().split(''));
 }
 
-const DIRS = {
-  'N': [-1, 0],
-  'S': [1, 0],
-  'E': [0, 1],
-  'W': [0, -1],
+const DIRECTIONS = [
+  { x: 0, y: -1 },
+  { x: 0, y: 1 },
+  { x: -1, y: 0 },
+  { x: 1, y: 0 }
+];
+
+const distance = (a, b) => {
+  const [ax, ay] = a.split(',').map(num => parseInt(num));
+  const [bx, by] = b.split(',').map(num => parseInt(num));
+
+  return Math.abs(ax - bx) + Math.abs(ay - by);
+}
+
+const isValid = (grid, pos) => {
+  return (
+    pos.x >= 0 &&
+    pos.x < grid[0].length &&
+    pos.y >= 0 &&
+    pos.y < grid.length &&
+    grid[pos.y][pos.x] !== "#"
+  );
+}
+
+function findEnd(grid) {
+  let ending = { x: 0, y: 0 };
+  for (let y = 0; y < grid[0].length; y++) {
+    for (let x = 0; x < grid.length; x++) {
+      if (grid[y][x] === 'E') {
+        ending = { x, y };
+        grid[y][x] = '.';
+      }
+    }
+  }
+  return ending;
+}
+
+function search(grid, { x, y }) {
+  const queue = [];
+  const distances = {};
+
+  queue.push({ x, y, steps: 0 });
+  distances[`${x},${y}`] = 0;
+
+  while (queue.length !== 0) {
+    const { x: cx, y: cy, steps: cs } = queue.shift();
+    if (!cx || !cy) break;
+
+    DIRECTIONS.forEach(({ x: dx, y: dy }) => {
+      const pos = { x: cx + dx, y: cy + dy };
+      if (!isValid(grid, pos)) return;
+
+      const nd = cs + 1;
+      const key = `${pos.x},${pos.y}`;
+      if (distances[key] === undefined || distances[key] > nd) {
+        queue.push({ ...pos, steps: nd });
+        distances[`${pos.x},${pos.y}`] = nd;
+      }
+    });
+  }
+
+  return distances;
+}
+
+function getCheats(cheatDistance) {
+  const grid = parseInput();
+  const end = findEnd(grid);
+  const distances = search(grid, end);
+
+  let cheats = 0;
+  const reachable = Object.keys(distances);
+  for (let i = 0; i < reachable.length; i++) {
+    for (let j = 0; j < reachable.length; j++) {
+      if (i === j) continue;
+
+      const [a, b] = [reachable[i], reachable[j]];
+      const dist = distance(a, b);
+
+      if (dist <= cheatDistance && distances[a] - distances[b] - dist >= 100) {
+        cheats += 1;
+      }
+    }
+  }
+
+  return cheats;
 };
 
-function findStartEnd(grid) {
-  let start = null;
-  let end = null;
-  for (let x = 0; x < grid.length; x++) {
-    for (let y = 0; y < grid[x].length; y++) {
-      const point = grid[x][y];
-      if (point.value === 'S') start = grid[x][y];
-      if (point.value === 'E') end = grid[x][y];
-      if (start && end) break;
-    }
-  }
-  return { start, end };
-}
+// Part 1
+const simpleCheats = getCheats(2);
+console.log(`Part 1 Answer: ${simpleCheats}`);
 
-class GridPoint {
-  constructor([x, y], value) {
-    this.x = x;
-    this.y = y;
-    this.cost = 0;
-    this.value = value;
-    this.direction = null;
-    this.neighbors = [];
-    this.parent = null;
-  }
-
-  updateNeighbors(grid) {
-    for (const dir in DIRS) {
-      const [dx, dy] = DIRS[dir];
-      const nx = this.x + dx;
-      const ny = this.y + dy;
-      if (
-        nx >= 0 &&
-        ny >= 0 &&
-        nx < grid.length &&
-        ny < grid[0].length &&
-        grid[nx][ny].value !== '#'
-      ) {
-        this.neighbors.push({
-          node: grid[nx][ny],
-          direction: dir
-        });
-      }
-    }
-  }
-}
-
-function findBestPath(initialGrid) {
-  let grid = structuredClone(initialGrid);
-  let openSet = [];
-  let closedSet = [];
-  let bestPath = [];
-  let obstacles = [];
-
-  for (let x = 0; x < grid.length; x++) {
-    for (let y = 0; y < grid[x].length; y++) {
-      const value = grid[x][y];
-
-      if (value === '#') {
-        obstacles.push([x, y]);
-      }
-
-      grid[x][y] = new GridPoint([x, y], value);
-    }
-  }
-
-  for (let x = 0; x < grid.length; x++) {
-    for (let y = 0; y < grid[x].length; y++) {
-      grid[x][y].updateNeighbors(grid);
-    }
-  }
-
-  const { start, end } = findStartEnd(grid);
-  openSet.push(start);
-  while (openSet.length > 0) {
-    openSet.sort((a, b) => a.f - b.f);
-    const current = openSet.shift();
-    if (current === end) {
-      let temp = current;
-      while (temp) {
-        bestPath.push(temp);
-        temp = temp.parent;
-      }
-      return { bestPath: bestPath.reverse(), obstacles };
-    }
-
-    closedSet.push(current);
-    for (const neighborInfo of current.neighbors) {
-      const { node: neighbor, direction } = neighborInfo;
-      if (closedSet.includes(neighbor)) continue;
-      const pc = current.cost + 1;
-      if (!openSet.includes(neighbor) || pc < neighbor.cost) {
-        neighbor.cost = pc;
-        neighbor.parent = current;
-        neighbor.direction = direction;
-        if (!openSet.includes(neighbor)) {
-          openSet.push(neighbor);
-        }
-      }
-    }
-  }
-
-  return { bestPath: [], obstacles };
-}
-
-function findCheats(savingsThreshold = 0) {
-  const grid = parseInput();
-
-  const savingsMap = new Map();
-
-  const { bestPath, obstacles } = findBestPath(grid);
-  const initialTime = bestPath.length - 1;
-  
-  for (const obstacle of obstacles) {
-    const [x, y] = obstacle;
-    let temp = structuredClone(grid);
-    temp[x][y] = '.';
-    const testResult = findBestPath(temp);
-    if (testResult.bestPath.length === 0) continue;
-
-    const saving = initialTime - (testResult.bestPath.length - 1);
-    if (saving >= savingsThreshold) {
-      if (savingsMap.has(saving)) {
-        const savings = savingsMap.get(saving);
-        savings.push(`${x},${y}`);
-        savingsMap.set(saving, savings);
-      } else {
-        savingsMap.set(saving, [`${x},${y}`]);
-      }
-    }
-  }
-
-  return savingsMap;
-}
-
-function getCheatsSaving100() {
-  const cheats = findCheats(100);
-  const values = Array.from(cheats.values());
-  return values.flat().length;
-}
-
-const cheats = getCheatsSaving100();
-console.log(`Part 1 Answer: ${cheats}`);
+// Part 2
+const complexCheats = getCheats(20);
+console.log(`Part 2 Answer: ${complexCheats}`);
